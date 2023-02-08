@@ -1,0 +1,54 @@
+#version: '3.8'
+# see here https://docs.docker.com/compose/compose-file/compose-versioning/ 
+version: '3.1'
+
+services:
+
+    fe: 
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile 
+        ports:
+            - 8085:8081
+        environment:
+            - REACT_ENV=development 
+        networks:
+            - frontend
+
+#continuing 
+    lo:
+        build:
+            context: ./sa-logic 
+            dockerfile: Dockerfile
+            ports:
+                - 5050:5001
+            environment:
+                - FLASK_ENV=development
+            networks: 
+                - backend
+
+
+    wa: 
+        build:
+            context: ./sa-webapp
+            dockerfile: Dockerfile
+            ports:
+                - 8080:8080 
+            environment:
+                - SA_LOGIC_API_URL=http://172.21.0.2:5001
+                - WA_NETWORK=backend 
+            depends_on:
+                - lo
+                # specifies frontend and backend as the networks the wa service will have access to networks:
+                - frontend 
+                - backend
+
+#continuing
+
+# bridge networks to allow the containers to communicate with each other 
+networks:
+    frontend: 
+        driver: bridge
+    backend:
+        driver: bridge
+    
